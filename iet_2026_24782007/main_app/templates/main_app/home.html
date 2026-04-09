@@ -1,26 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Smart City Issue Reporting</title>
-</head>
-<body>
-    <h1>Daftar Laporan Masalah Kota</h1>
+<h2>Laporan Kota Kemiling</h2>
+<a href="{% url 'report_add' %}">Tambah Laporan Baru</a>
 
-    <a href="{% url 'add_report' %}">Tambah Laporan</a>
-    <hr>
-
+<table border="1">
+    <tr>
+        <th>Judul</th>
+        <th>Status</th>
+        <th>Aksi</th>
+        <th>Workflow</th>
+    </tr>
     {% for report in reports %}
-        <h3>{{ report.title }}</h3>
-        <p><b>Kategori:</b> {{ report.category }}</p>
-        <p><b>Deskripsi:</b> {{ report.description }}</p>
-        <p><b>Lokasi:</b> {{ report.location }}</p>
-        <p><b>Status:</b> {{ report.status }}</p>
-
-        <a href="{% url 'edit_report' report.id %}">Edit</a>
-        <a href="{% url 'delete_report' report.id %}">Delete</a>
-        <hr>
-    {% empty %}
-        <p>Belum ada laporan.</p>
+    <tr>
+        <td>{{ report.title }}</td>
+        <td><strong>{{ report.get_status_display }}</strong></td>
+        <td>
+            <a href="{% url 'report_detail' report.pk %}">Detail</a> |
+            <a href="{% url 'report_edit' report.pk %}">Edit</a> |
+            <a href="{% url 'report_delete' report.pk %}">Delete</a>
+        </td>
+        <td>
+            {% if report.status == 'REPORTED' %}
+            <form action="{% url 'update_status' report.pk %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="VERIFIED">
+                <button type="submit">Verifikasi Laporan</button>
+            </form>
+            {% elif report.status == 'VERIFIED' %}
+                <span style="color: green;">Sudah Terverifikasi</span>
+            {% endif %}
+        </td>
+    </tr>
     {% endfor %}
-</body>
-</html>
+</table>

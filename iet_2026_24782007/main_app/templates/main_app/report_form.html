@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Add Report</title>
+    <title>Edit Report</title>
 </head>
 <body>
-    <h1>Tambah Laporan</h1>
+    <h1>Edit Laporan</h1>
 
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Simpan</button>
+        <button type="submit">Update</button>
     </form>
 
     <a href="{% url 'report_list' %}">Kembali</a>

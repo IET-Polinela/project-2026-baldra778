@@ -1,33 +1,110 @@
-<h2>Laporan Kota Kemiling</h2>
-<a href="{% url 'report_add' %}">Tambah Laporan Baru</a>
+{% extends 'main_app/base.html' %}
+{% block title %}Daftar Laporan{% endblock %}
 
-<table border="1">
-    <tr>
-        <th>Judul</th>
-        <th>Status</th>
-        <th>Aksi</th>
-        <th>Workflow</th>
-    </tr>
-    {% for report in reports %}
-    <tr>
-        <td>{{ report.title }}</td>
-        <td><strong>{{ report.get_status_display }}</strong></td>
-        <td>
-            <a href="{% url 'report_detail' report.pk %}">Detail</a> |
-            <a href="{% url 'report_edit' report.pk %}">Edit</a> |
-            <a href="{% url 'report_delete' report.pk %}">Delete</a>
-        </td>
-        <td>
-            {% if report.status == 'REPORTED' %}
-            <form action="{% url 'update_status' report.pk %}" method="post" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="status" value="VERIFIED">
-                <button type="submit">Verifikasi Laporan</button>
-            </form>
-            {% elif report.status == 'VERIFIED' %}
-                <span style="color: green;">Sudah Terverifikasi</span>
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-light p-2 rounded shadow-sm">
+
+        {% if breadcrumb == 'Home' %}
+            <li class="breadcrumb-item active">Home</li>
+        {% else %}
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item active">{{ breadcrumb }}</li>
+        {% endif %}
+
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="fw-bold">Daftar Laporan</h2>
+    <a href="{% url 'add_report' %}" class="btn btn-primary">
+        Tambah Laporan
+    </a>
+</div>
+
+{% if reports %}
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Judul</th>
+                        <th>Lokasi</th>
+                        <th>Status</th>
+                        <th width="350">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.title }}</td>
+                        <td>{{ report.location }}</td>
+                        <td>
+                            {% if report.status == 'REPORTED' %}
+                                <span class="badge bg-secondary">Reported</span>
+                            {% elif report.status == 'VERIFIED' %}
+                                <span class="badge bg-info">Verified</span>
+                            {% elif report.status == 'IN_PROGRESS' %}
+                                <span class="badge bg-warning text-dark">In Progress</span>
+                            {% elif report.status == 'RESOLVED' %}
+                                <span class="badge bg-success">Resolved</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'detail_report' report.id %}" class="btn btn-sm btn-info">
+                                Detail
+                            </a>
+                            <a href="{% url 'edit_report' report.id %}" class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+                            <a href="{% url 'delete_report' report.id %}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Yakin hapus laporan ini?')">
+                               Hapus
+                            </a>
+
+                            {% if report.status == 'REPORTED' %}
+                            <a href="{% url 'change_status' report.id 'VERIFIED' %}"
+                               class="btn btn-sm btn-primary"
+                               onclick="return confirm('Ubah ke VERIFIED?')">
+                               Verify
+                            </a>
+                            {% elif report.status == 'VERIFIED' %}
+                            <a href="{% url 'change_status' report.id 'IN_PROGRESS' %}"
+                               class="btn btn-sm btn-dark"
+                               onclick="return confirm('Ubah ke IN_PROGRESS?')">
+                               Progress
+                            </a>
+                            {% elif report.status == 'IN_PROGRESS' %}
+                            <a href="{% url 'change_status' report.id 'RESOLVED' %}"
+                               class="btn btn-sm btn-success"
+                               onclick="return confirm('Ubah ke RESOLVED?')">
+                               Resolve
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="card shadow text-center p-5">
+    <h4>Belum ada laporan</h4>
+    <p>Silakan tambah laporan pertama kamu</p>
+    <a href="{% url 'add_report' %}" class="btn btn-primary">
+        Tambah Laporan
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

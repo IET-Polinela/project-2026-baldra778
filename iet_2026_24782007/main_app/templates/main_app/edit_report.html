@@ -1,5 +1,5 @@
 {% extends 'main_app/base.html' %}
-{% block title %}Tambah Laporan{% endblock %}
+{% block title %}Edit Laporan{% endblock %}
 
 {% block content %}
 
@@ -12,7 +12,7 @@
         <li class="breadcrumb-item">
             <a href="{% url 'reports' %}">Laporan</a>
         </li>
-        <li class="breadcrumb-item active">Tambah</li>
+        <li class="breadcrumb-item active">Edit</li>
     </ol>
 </nav>
 
@@ -20,7 +20,7 @@
 <div class="card shadow">
     <div class="card-body">
 
-        <h3 class="mb-4">Tambah Laporan</h3>
+        <h3 class="mb-4">Edit Laporan</h3>
 
         <form method="post">
             {% csrf_token %}
@@ -49,8 +49,8 @@
                 <a href="{% url 'reports' %}" class="btn btn-secondary">
                     ← Kembali
                 </a>
-                <button type="submit" class="btn btn-primary">
-                    Simpan
+                <button type="submit" class="btn btn-warning">
+                    Update
                 </button>
             </div>
 

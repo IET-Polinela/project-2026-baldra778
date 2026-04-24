@@ -4,6 +4,19 @@ from .models import Report
 from .forms import ReportForm
 
 
+def admin_required(view_func):
+    """Decorator: hanya Admin yang boleh akses view ini."""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, "Silakan login terlebih dahulu.")
+            return redirect('login')
+        if not request.user.is_admin:
+            messages.error(request, "Akses Ditolak! Fitur ini hanya untuk Admin.")
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 def home(request):
     reports = Report.objects.all().order_by('-created_at')
     context = {
@@ -31,6 +44,7 @@ def contact_page(request):
     return render(request, 'main_app/contact.html')
 
 
+@admin_required
 def add_report(request):
     if request.method == 'POST':
         form = ReportForm(request.POST)
@@ -49,6 +63,7 @@ def add_report(request):
 
     return render(request, 'main_app/report_form.html', context)
 
+@admin_required
 def edit_report(request, report_id):
     report = get_object_or_404(Report, id=report_id)
 
@@ -80,6 +95,7 @@ def detail_report(request, report_id):
 
     return render(request, 'main_app/detail_report.html', context)
 
+@admin_required
 def delete_report(request, report_id):
     report = get_object_or_404(Report, id=report_id)
 
@@ -91,6 +107,7 @@ def delete_report(request, report_id):
     return render(request, 'main_app/delete_report.html', {'report': report})
 
 
+@admin_required
 def change_status(request, report_id, new_status):
     report = get_object_or_404(Report, id=report_id)
 

@@ -22,6 +22,7 @@
             <ul class="navbar-nav me-auto">
                 <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="/reports/">Reports</a></li>
+                <li class="nav-item"><a class="nav-link" href="/dashboard/">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link" href="/about/">About</a></li>
                 <li class="nav-item"><a class="nav-link" href="/contacts/">Contact</a></li>
             </ul>
@@ -74,9 +75,34 @@
 <script>
 function loadingButton(btn){
     btn.disabled = true;
-    btn.innerHTML = 'Loading...';
-    btn.form.submit();
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
 }
+
+function loadingLink(link){
+    link.classList.add('disabled');
+    link.style.pointerEvents = 'none';
+    link.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
+}
+
+function handleLoadingLink(link){
+    var message = link.dataset.confirmMessage;
+    if (message && !confirm(message)) {
+        return false;
+    }
+    loadingLink(link);
+    return true;
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('form').forEach(function(form){
+        form.addEventListener('submit', function(event){
+            var submitButton = form.querySelector('button[type="submit"]');
+            if (!submitButton) return;
+            if (submitButton.disabled) return;
+            loadingButton(submitButton);
+        });
+    });
+});
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

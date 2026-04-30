@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from .models import Report
 from .forms import ReportForm
 
@@ -124,3 +125,53 @@ def change_status(request, report_id, new_status):
             messages.success(request, f"Status diubah ke {new_status}")
 
     return redirect('home')
+
+
+def search_reports(request):
+    """API untuk Live Search - Return JSON list of matching reports"""
+    query = request.GET.get('q', '').strip()
+    
+    if not query:
+        return JsonResponse({'results': []})
+    
+    # Search di title, location, category, dan description
+    reports = Report.objects.filter(
+        title__icontains=query
+    ) | Report.objects.filter(
+        location__icontains=query
+    ) | Report.objects.filter(
+        category__icontains=query
+    )
+    
+    results = []
+    for report in reports[:10]:  # Limit 10 hasil
+        results.append({
+            'id': report.id,
+            'title': report.title,
+            'category': report.category,
+            'location': report.location,
+            'status': report.status,
+        })
+    
+    return JsonResponse({'results': results})
+
+
+def detail_report_api(request, report_id):
+    """API untuk Detail Modal - Return JSON report data"""
+    try:
+        report = Report.objects.get(id=report_id)
+        return JsonResponse({
+            'success': True,
+            'id': report.id,
+            'title': report.title,
+            'category': report.category,
+            'location': report.location,
+            'status': report.status,
+            'description': report.description,
+            'created_at': report.created_at.strftime('%d %b %Y, %H:%M'),
+        })
+    except Report.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Laporan tidak ditemukan'
+        }, status=404)

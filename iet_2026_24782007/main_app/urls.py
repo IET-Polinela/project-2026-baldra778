@@ -16,4 +16,8 @@ urlpatterns = [
         views.change_status,
         name='change_status'
     ),
+    
+    # API Endpoints
+    path('api/search/', views.search_reports, name='search_reports'),
+    path('api/detail/<int:report_id>/', views.detail_report_api, name='detail_report_api'),
 ]

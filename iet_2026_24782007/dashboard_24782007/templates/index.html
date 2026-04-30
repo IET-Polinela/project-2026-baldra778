@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h2>Dashboard</h2>
+
+<canvas id="statusChart"></canvas>
+<canvas id="categoryChart"></canvas>
+
+<input type="text" id="search" placeholder="Search...">
+<div id="results"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    fetch('/dashboard/data/')
+    .then(res => res.json())
+    .then(data => {
+        console.log('Dashboard JSON data:', data);
+
+        // STATUS CHART (DOUGHNUT)
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: data.status.map(x => x.status),
+                datasets: [{
+                    data: data.status.map(x => x.total)
+                }]
+            }
+        });
+
+        // CATEGORY CHART (BAR)
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'bar',
+            data: {
+                labels: data.category.map(x => x.category),
+                datasets: [{
+                    data: data.category.map(x => x.total)
+                }]
+            }
+        });
+
+    });
+
+    // LIVE SEARCH
+    let timeout = null;
+
+    document.getElementById('search').addEventListener('keyup', function () {
+        clearTimeout(timeout);
+
+        timeout = setTimeout(() => {
+            fetch(`/dashboard/search/?q=${this.value}`)
+            .then(res => res.json())
+            .then(data => {
+                let html = '';
+                data.results.forEach(item => {
+                    html += `<p data-id="${item.id}" class="detail-btn">${item.title}</p>`;
+                });
+                document.getElementById('results').innerHTML = html;
+            });
+        }, 500); // debouncing
+    });
+
+    // EVENT DELEGATION
+    document.getElementById('results').addEventListener('click', function(e){
+        if(e.target.classList.contains('detail-btn')){
+            let id = e.target.dataset.id;
+
+            fetch(`/dashboard/detail/${id}/`)
+            .then(res => res.json())
+            .then(data => {
+                alert(`Detail:\n${data.title}\n${data.status}`);
+            });
+        }
+    });
+
+});
+</script>
+
+</body>
+</html>

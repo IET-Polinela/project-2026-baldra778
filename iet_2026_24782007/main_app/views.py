@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
@@ -20,8 +22,10 @@ def admin_required(view_func):
 
 def home(request):
     reports = Report.objects.all().order_by('-created_at')
+    status_counts = Counter(report.status for report in reports)
     context = {
         'reports': reports,
+        'status_counts': status_counts,
         'page_name': 'Daftar Laporan',
         'breadcrumb': 'Home'
     }
@@ -30,8 +34,10 @@ def home(request):
 
 def reports_page(request):
     reports = Report.objects.all().order_by('-created_at')
+    status_counts = Counter(report.status for report in reports)
     context = {
         'reports': reports,
+        'status_counts': status_counts,
         'page_name': 'Daftar Laporan',
         'breadcrumb': 'Reports'
     }

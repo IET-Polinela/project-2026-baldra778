@@ -20,17 +20,55 @@
 </nav>
 
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="fw-bold">Daftar Laporan</h2>
-    {% if user.is_authenticated and user.is_admin %}
-    <a href="{% url 'add_report' %}" class="btn btn-primary">
-        Tambah Laporan
-    </a>
-    {% endif %}
+<div class="card p-4 mb-4 border-0">
+    <div class="row align-items-center g-3">
+        <div class="col-lg-8">
+            <p class="text-info mb-2">Kemiling City • Dashboard Warga</p>
+            <h2 class="fw-bold mb-2">Daftar Laporan Warga</h2>
+            <p class="text-white-50 mb-0">Pantau status laporan, temukan isu yang sedang berjalan, dan kelola respons dengan tampilan yang lebih rapi.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            {% if user.is_authenticated and user.is_admin %}
+            <a href="{% url 'add_report' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle me-1"></i> Tambah Laporan
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Masuk ke dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">Total Laporan</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ reports|length }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">Verified</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ status_counts.VERIFIED|default:0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">In Progress</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ status_counts.IN_PROGRESS|default:0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">Resolved</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ status_counts.RESOLVED|default:0 }}</h3>
+        </div>
+    </div>
 </div>
 
 <!-- Live Search Box -->
-<div class="mb-3">
+<div class="card p-3 mb-4">
+    <label for="searchInput" class="form-label text-info mb-2">Cari laporan</label>
     <input 
         type="text" 
         id="searchInput" 
@@ -41,8 +79,15 @@
 </div>
 
 {% if reports %}
-<div class="card shadow">
+<div class="card shadow border-0">
     <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-1">Riwayat Laporan</h5>
+                <p class="small text-white-50 mb-0">Daftar laporan terbaru yang sedang dipantau.</p>
+            </div>
+            <span class="badge bg-info text-dark">Live</span>
+        </div>
         <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-primary">

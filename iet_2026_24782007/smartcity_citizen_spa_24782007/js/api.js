@@ -8,7 +8,7 @@ async function requestAPI(endpoint, method = 'GET', bodyData = null) {
     };
 
     // Ambil token dari localStorage secara otomatis jika ada [cite: 117]
-    const accessToken = localStorage.getItem('access_token');
+    const accessToken = localStorage.getItem('access_token') || localStorage.getItem('access');
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`; // [cite: 117]
     }

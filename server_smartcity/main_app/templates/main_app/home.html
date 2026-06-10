@@ -1,0 +1,334 @@
+{% extends 'main_app/base.html' %}
+{% block title %}Daftar Laporan{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-light p-2 rounded shadow-sm">
+
+        {% if breadcrumb == 'Home' %}
+            <li class="breadcrumb-item active">Home</li>
+        {% else %}
+            <li class="breadcrumb-item">
+                <a href="{% url 'home' %}">Home</a>
+            </li>
+            <li class="breadcrumb-item active">{{ breadcrumb }}</li>
+        {% endif %}
+
+    </ol>
+</nav>
+
+<!-- Header -->
+<div class="card p-4 mb-4 border-0">
+    <div class="row align-items-center g-3">
+        <div class="col-lg-8">
+            <p class="text-info mb-2">Kemiling City • Dashboard Warga</p>
+            <h2 class="fw-bold mb-2">Daftar Laporan Warga</h2>
+            <p class="text-white-50 mb-0">Pantau status laporan, temukan isu yang sedang berjalan, dan kelola respons dengan tampilan yang lebih rapi.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            {% if user.is_authenticated and user.is_admin %}
+            <a href="{% url 'add_report' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle me-1"></i> Tambah Laporan
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Masuk ke dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">Total Laporan</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ reports|length }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">Verified</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ status_counts.VERIFIED|default:0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">In Progress</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ status_counts.IN_PROGRESS|default:0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card p-3 text-center h-100">
+            <small class="text-info">Resolved</small>
+            <h3 class="fw-bold mb-0 mt-1">{{ status_counts.RESOLVED|default:0 }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Live Search Box -->
+<div class="card p-3 mb-4">
+    <label for="searchInput" class="form-label text-info mb-2">Cari laporan</label>
+    <input 
+        type="text" 
+        id="searchInput" 
+        class="form-control form-control-lg" 
+        placeholder="🔍 Cari laporan berdasarkan judul, lokasi, atau kategori..."
+        autocomplete="off">
+    <div id="searchResults" class="list-group mt-2" style="display: none; max-height: 400px; overflow-y: auto;"></div>
+</div>
+
+{% if reports %}
+<div class="card shadow border-0">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold mb-1">Riwayat Laporan</h5>
+                <p class="small text-white-50 mb-0">Daftar laporan terbaru yang sedang dipantau.</p>
+            </div>
+            <span class="badge bg-info text-dark">Live</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Judul</th>
+                        <th>Lokasi</th>
+                        <th>Status</th>
+                        <th width="350">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.title }}</td>
+                        <td>{{ report.location }}</td>
+                        <td>
+                            {% if report.status == 'REPORTED' %}
+                                <span class="badge bg-secondary">Reported</span>
+                            {% elif report.status == 'VERIFIED' %}
+                                <span class="badge bg-info">Verified</span>
+                            {% elif report.status == 'IN_PROGRESS' %}
+                                <span class="badge bg-warning text-dark">In Progress</span>
+                            {% elif report.status == 'RESOLVED' %}
+                                <span class="badge bg-success">Resolved</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-info" onclick="openDetailModal({{ report.id }})">
+                                Detail
+                            </button>
+                            {% if user.is_authenticated and user.is_admin %}
+                            <a href="{% url 'edit_report' report.id %}" class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+                            <a href="{% url 'delete_report' report.id %}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Yakin hapus laporan ini?')">
+                               Hapus
+                            </a>
+
+                            {% if report.status == 'REPORTED' %}
+                            <a href="{% url 'change_status' report.id 'VERIFIED' %}"
+                               class="btn btn-sm btn-primary"
+                               data-confirm-message="Ubah ke VERIFIED?"
+                               onclick="return handleLoadingLink(this)">
+                               Verify
+                            </a>
+                            {% elif report.status == 'VERIFIED' %}
+                            <a href="{% url 'change_status' report.id 'IN_PROGRESS' %}"
+                               class="btn btn-sm btn-dark"
+                               data-confirm-message="Ubah ke IN_PROGRESS?"
+                               onclick="return handleLoadingLink(this)">
+                               Progress
+                            </a>
+                            {% elif report.status == 'IN_PROGRESS' %}
+                            <a href="{% url 'change_status' report.id 'RESOLVED' %}"
+                               class="btn btn-sm btn-success"
+                               data-confirm-message="Ubah ke RESOLVED?"
+                               onclick="return handleLoadingLink(this)">
+                               Resolve
+                            </a>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title" id="modalTitle">Detail Laporan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Live Search Function
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+let searchTimeout;
+
+searchInput.addEventListener('keyup', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length < 1) {
+        searchResults.style.display = 'none';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        fetch(`/api/search/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results.length === 0) {
+                    searchResults.innerHTML = '<div class="list-group-item text-muted text-center py-3">Tidak ada hasil ditemukan</div>';
+                    searchResults.style.display = 'block';
+                    return;
+                }
+                
+                let html = '';
+                data.results.forEach(report => {
+                    const statusBadgeClass = {
+                        'REPORTED': 'bg-secondary',
+                        'VERIFIED': 'bg-info',
+                        'IN_PROGRESS': 'bg-warning text-dark',
+                        'RESOLVED': 'bg-success'
+                    }[report.status] || 'bg-secondary';
+                    
+                    html += `
+                        <a href="#" class="list-group-item list-group-item-action" onclick="openDetailModal(${report.id}); return false;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">${escapeHtml(report.title)}</h6>
+                                    <p class="text-muted small mb-1">
+                                        <strong>Lokasi:</strong> ${escapeHtml(report.location)}<br>
+                                        <strong>Kategori:</strong> <span class="badge bg-secondary">${escapeHtml(report.category)}</span>
+                                    </p>
+                                </div>
+                                <span class="badge ${statusBadgeClass}">${report.status}</span>
+                            </div>
+                        </a>
+                    `;
+                });
+                
+                searchResults.innerHTML = html;
+                searchResults.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                searchResults.innerHTML = '<div class="list-group-item text-danger text-center py-3">Error loading results</div>';
+                searchResults.style.display = 'block';
+            });
+    }, 300); // Debounce 300ms
+});
+
+// Close search results when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults')) {
+        searchResults.style.display = 'none';
+    }
+});
+
+// Function untuk open detail modal via AJAX
+function openDetailModal(reportId) {
+    const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+    const modalContent = document.getElementById('modalContent');
+    
+    fetch(`/api/detail/${reportId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const statusBadgeClass = {
+                    'REPORTED': 'bg-secondary',
+                    'VERIFIED': 'bg-info',
+                    'IN_PROGRESS': 'bg-warning text-dark',
+                    'RESOLVED': 'bg-success'
+                }[data.status] || 'bg-secondary';
+                
+                const html = `
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <h5>${escapeHtml(data.title)}</h5>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge ${statusBadgeClass} fs-6">${data.status}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <strong>Kategori:</strong> <span class="badge bg-secondary">${escapeHtml(data.category)}</span>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Lokasi:</strong><br>
+                        <p class="text-muted">${escapeHtml(data.location)}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Deskripsi:</strong><br>
+                        <p class="text-muted">${escapeHtml(data.description)}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Tanggal Dibuat:</strong><br>
+                        <p class="text-muted">${data.created_at}</p>
+                    </div>
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <a href="/detail/${reportId}/" class="btn btn-sm btn-info">Lihat Detail Lengkap</a>
+                        <a href="/edit/${reportId}/" class="btn btn-sm btn-warning">Edit</a>
+                    </div>
+                `;
+                
+                modalContent.innerHTML = html;
+                document.getElementById('modalTitle').textContent = 'Detail Laporan';
+                modal.show();
+            } else {
+                modalContent.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalContent.innerHTML = '<div class="alert alert-danger">Error loading report details</div>';
+        });
+}
+
+// Utility function untuk escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+
+{% else %}
+<div class="card shadow text-center p-5">
+    <h4>Belum ada laporan</h4>
+    <p>Silakan tambah laporan pertama kamu</p>
+    <a href="{% url 'add_report' %}" class="btn btn-primary">
+        Tambah Laporan
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

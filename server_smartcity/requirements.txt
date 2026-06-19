@@ -11,4 +11,4 @@ tzdata==2025.3
 gunicorn
 psycopg2-binary
 drf-spectacular==0.28.0
-django-scalar==0.1.0
+django-scalar==0.1.8
